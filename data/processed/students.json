@@ -1,0 +1,252 @@
+[
+  {
+    "id": "S001",
+    "name": "Student 1",
+    "class": "pharmacy-1st year"
+  },
+  {
+    "id": "S002",
+    "name": "Student 2",
+    "class": "diploma-2nd year"
+  },
+  {
+    "id": "S003",
+    "name": "Student 3",
+    "class": "b.sc-3rd year"
+  },
+  {
+    "id": "S004",
+    "name": "Student 4",
+    "class": "pharmacy-2nd year"
+  },
+  {
+    "id": "S005",
+    "name": "Student 5",
+    "class": "pharmacy-1st year"
+  },
+  {
+    "id": "S006",
+    "name": "Student 6",
+    "class": "b.tech-4th year"
+  },
+  {
+    "id": "S007",
+    "name": "Student 7",
+    "class": "b.tech-1st year"
+  },
+  {
+    "id": "S008",
+    "name": "Student 8",
+    "class": "b.com-1st year"
+  },
+  {
+    "id": "S009",
+    "name": "Student 9",
+    "class": "nursing-2nd year"
+  },
+  {
+    "id": "S010",
+    "name": "Student 10",
+    "class": "bca-1st year"
+  },
+  {
+    "id": "S011",
+    "name": "Student 11",
+    "class": "bba-3rd year"
+  },
+  {
+    "id": "S012",
+    "name": "Student 12",
+    "class": "ba-2nd year"
+  },
+  {
+    "id": "S013",
+    "name": "Student 13",
+    "class": "bba-4th year"
+  },
+  {
+    "id": "S014",
+    "name": "Student 14",
+    "class": "bca-1st year"
+  },
+  {
+    "id": "S015",
+    "name": "Student 15",
+    "class": "b.tech-2nd year"
+  },
+  {
+    "id": "S016",
+    "name": "Student 16",
+    "class": "bca-3rd year"
+  },
+  {
+    "id": "S017",
+    "name": "Student 17",
+    "class": "b.sc-3rd year"
+  },
+  {
+    "id": "S018",
+    "name": "Student 18",
+    "class": "nursing-2nd year"
+  },
+  {
+    "id": "S019",
+    "name": "Student 19",
+    "class": "b.sc-4th year"
+  },
+  {
+    "id": "S020",
+    "name": "Student 20",
+    "class": "b.tech-4th year"
+  },
+  {
+    "id": "S021",
+    "name": "Student 21",
+    "class": "ba-3rd year"
+  },
+  {
+    "id": "S022",
+    "name": "Student 22",
+    "class": "ba-3rd year"
+  },
+  {
+    "id": "S023",
+    "name": "Student 23",
+    "class": "bba-3rd year"
+  },
+  {
+    "id": "S024",
+    "name": "Student 24",
+    "class": "nursing-2nd year"
+  },
+  {
+    "id": "S025",
+    "name": "Student 25",
+    "class": "diploma-3rd year"
+  },
+  {
+    "id": "S026",
+    "name": "Student 26",
+    "class": "ba-4th year"
+  },
+  {
+    "id": "S027",
+    "name": "Student 27",
+    "class": "diploma-1st year"
+  },
+  {
+    "id": "S028",
+    "name": "Student 28",
+    "class": "bba-1st year"
+  },
+  {
+    "id": "S029",
+    "name": "Student 29",
+    "class": "b.com-2nd year"
+  },
+  {
+    "id": "S030",
+    "name": "Student 30",
+    "class": "b.tech-3rd year"
+  },
+  {
+    "id": "S031",
+    "name": "Student 31",
+    "class": "b.tech-1st year"
+  },
+  {
+    "id": "S032",
+    "name": "Student 32",
+    "class": "b.com-3rd year"
+  },
+  {
+    "id": "S033",
+    "name": "Student 33",
+    "class": "nursing-1st year"
+  },
+  {
+    "id": "S034",
+    "name": "Student 34",
+    "class": "bba-1st year"
+  },
+  {
+    "id": "S035",
+    "name": "Student 35",
+    "class": "bba-2nd year"
+  },
+  {
+    "id": "S036",
+    "name": "Student 36",
+    "class": "ba-1st year"
+  },
+  {
+    "id": "S037",
+    "name": "Student 37",
+    "class": "b.com-3rd year"
+  },
+  {
+    "id": "S038",
+    "name": "Student 38",
+    "class": "diploma-3rd year"
+  },
+  {
+    "id": "S039",
+    "name": "Student 39",
+    "class": "b.tech-3rd year"
+  },
+  {
+    "id": "S040",
+    "name": "Student 40",
+    "class": "bca-3rd year"
+  },
+  {
+    "id": "S041",
+    "name": "Student 41",
+    "class": "pharmacy-3rd year"
+  },
+  {
+    "id": "S042",
+    "name": "Student 42",
+    "class": "nursing-3rd year"
+  },
+  {
+    "id": "S043",
+    "name": "Student 43",
+    "class": "ba-3rd year"
+  },
+  {
+    "id": "S044",
+    "name": "Student 44",
+    "class": "nursing-1st year"
+  },
+  {
+    "id": "S045",
+    "name": "Student 45",
+    "class": "b.com-3rd year"
+  },
+  {
+    "id": "S046",
+    "name": "Student 46",
+    "class": "b.com-1st year"
+  },
+  {
+    "id": "S047",
+    "name": "Student 47",
+    "class": "ba-1st year"
+  },
+  {
+    "id": "S048",
+    "name": "Student 48",
+    "class": "b.tech-4th year"
+  },
+  {
+    "id": "S049",
+    "name": "Student 49",
+    "class": "b.com-1st year"
+  },
+  {
+    "id": "S050",
+    "name": "Student 50",
+    "class": "nursing-1st year"
+  }
+]
