@@ -13,8 +13,14 @@ const protect = async (req, res, next) => {
 
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-      req.user = await User.findById(decoded.id).select("-password");
+      // fetch full user including role
+      const user = await User.findById(decoded.id).select("-password");
 
+      if (!user) {
+        return res.status(401).json({ message: "User not found" });
+      }
+
+      req.user = user; // 👈 MUST contain role
       next();
     } catch (error) {
       return res.status(401).json({ message: "Token invalid" });

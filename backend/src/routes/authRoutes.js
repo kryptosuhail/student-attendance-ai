@@ -4,11 +4,11 @@ import protect from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-/* PUBLIC ROUTES */
+/* -------- PUBLIC ROUTES -------- */
 router.post("/register", registerUser);
 router.post("/login", loginUser);
 
-/* PROTECTED ROUTE (TEST) */
+/* -------- PROTECTED ROUTE (KEEP THIS) -------- */
 router.get("/profile", protect, (req, res) => {
   res.json({
     message: "Protected route accessed",

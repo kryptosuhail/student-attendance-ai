@@ -16,6 +16,13 @@ const userSchema = new mongoose.Schema(
       type: String,
       enum: ["student", "staff", "management"],
       required: true
+    },
+
+    // ✅ ADD THIS (CRITICAL)
+    classId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Class",
+      default: null
     }
   },
   { timestamps: true }
