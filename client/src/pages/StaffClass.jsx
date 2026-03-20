@@ -1,4 +1,6 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
+import api from "../utils/api";
 import {
   Box,
   Card,
@@ -29,22 +31,47 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-/* ---------------- MOCK DATA ---------------- */
-
-const students = Array.from({ length: 40 }).map((_, i) => ({
-  roll: `CSE${i + 1}`,
-  name: `Student ${i + 1}`,
-  present: true,
-  weekly: [1, 1, 0, 1, 1],
-}));
-
-const weekDays = ["Mon", "Tue", "Wed", "Thu", "Fri"];
-
 /* ---------------- COMPONENT ---------------- */
 
 export default function StaffClass() {
-  const [attendance, setAttendance] = useState(students);
+  const { dept, section } = useParams();
+  const [attendance, setAttendance] = useState([]);
   const [locked, setLocked] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  const weekDays = ["Mon", "Tue", "Wed", "Thu", "Fri"];
+
+  useEffect(() => {
+    const fetchClassDetails = async () => {
+      try {
+        const res = await api.get(`/staff/class/${dept}/${section}`);
+        setAttendance(res.data.students || []);
+      } catch (err) {
+        console.error("Failed to fetch class details", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchClassDetails();
+  }, [dept, section]);
+
+  const handleSave = async () => {
+    try {
+      const payload = attendance.map(s => ({
+        studentId: s.studentId,
+        status: s.present ? "Present" : "Absent"
+      }));
+      await api.post("/attendance/mark", { students: payload });
+      setLocked(true);
+      alert("Attendance marked successfully!");
+    } catch (err) {
+      alert(err.response?.data?.message || "Error marking attendance");
+    }
+  };
+
+  if (loading) {
+     return <Box p={5} textAlign="center" color="#fff"><Typography>Loading Students...</Typography></Box>;
+  }
 
   const presentCount = attendance.filter((s) => s.present).length;
   const absentCount = attendance.length - presentCount;
@@ -56,8 +83,8 @@ export default function StaffClass() {
 
   const lineData = weekDays.map((day, i) => ({
     day,
-    attendance:
-      (attendance.filter((s) => s.weekly[i] === 1).length /
+    attendance: attendance.length === 0 ? 0 :
+      (attendance.filter((s) => s.weekly && s.weekly[i] === 1).length /
         attendance.length) *
       100,
   }));
@@ -88,12 +115,11 @@ export default function StaffClass() {
         {/* ---------------- TOP SUMMARY ---------------- */}
         <Box display="flex" gap={2} flexWrap="wrap">
           {[
-            ["Department", "CSE"],
-            ["Year / Section", "3rd - A"],
+            ["Department", dept],
+            ["Section", section],
             ["Students", attendance.length],
-            ["Period", "3"],
-            ["Subject", "AI"],
-            ["Staff", "Mythili"],
+            ["Period", "Current"],
+            ["Staff", "You"],
           ].map(([label, value]) => (
             <Card key={label} sx={{ minWidth: 180 }}>
               <CardContent>
@@ -165,8 +191,8 @@ export default function StaffClass() {
               <Button
                 variant="contained"
                 sx={{ mt: 2 }}
-                disabled={locked}
-                onClick={() => setLocked(true)}
+                disabled={locked || attendance.length === 0}
+                onClick={handleSave}
               >
                 Save Attendance
               </Button>

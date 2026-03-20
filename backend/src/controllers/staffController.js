@@ -1,6 +1,7 @@
 import Timetable from "../models/Timetable.js";
 import Attendance from "../models/Attendance.js";
 import User from "../models/User.js";
+import Class from "../models/Class.js";
 
 /* 🔔 Period → Time mapping (adjust if needed) */
 const PERIOD_SLOTS = [
@@ -288,5 +289,138 @@ export const getOverallAttendanceSummary = async (req, res) => {
       message: "Error fetching overall attendance",
       error: error.message
     });
+  }
+};
+
+/* =========================================
+   📈 Staff – Weekly Analytics per Dept
+   ========================================= */
+export const getStaffWeeklyAnalytics = async (req, res) => {
+  try {
+    const classes = await Timetable.find({ staffId: req.user._id }).populate("classId");
+    
+    // Get unique departments the staff teaches
+    const departmentsList = [...new Set(classes.map(c => c.classId.department))];
+    
+    const weeklyData = {};
+    const daysMap = { 1: "Sun", 2: "Mon", 3: "Tue", 4: "Wed", 5: "Thu", 6: "Fri", 7: "Sat" };
+
+    for (const dept of departmentsList) {
+      const deptClassIds = classes.filter(c => c.classId.department === dept).map(c => c.classId._id);
+      
+      const result = await Attendance.aggregate([
+        { $match: { classId: { $in: deptClassIds } } },
+        {
+          $group: {
+             _id: { $dayOfWeek: "$date" },
+             total: { $sum: 1 },
+             present: { $sum: { $cond: [{ $eq: ["$status", "Present"] }, 1, 0] } }
+          }
+        },
+        { $sort: { "_id": 1 } }
+      ]);
+      
+      const chartData = [
+         { day: "Mon", percent: 0 },
+         { day: "Tue", percent: 0 },
+         { day: "Wed", percent: 0 },
+         { day: "Thu", percent: 0 },
+         { day: "Fri", percent: 0 }
+      ];
+      
+      result.forEach(item => {
+         const dayName = daysMap[item._id];
+         const dayObj = chartData.find(d => d.day === dayName);
+         if (dayObj) {
+            dayObj.percent = Math.round((item.present / item.total) * 100);
+         }
+      });
+      
+      weeklyData[dept] = chartData;
+    }
+
+    const uniqueClasses = [];
+    const seen = new Set();
+    classes.forEach(c => {
+       const dept = c.classId?.department || "Unknown";
+       const sec = c.classId?.section || "A";
+       const key = `${dept}-${sec}`;
+       if (!seen.has(key)) {
+          seen.add(key);
+          uniqueClasses.push({
+             name: dept,
+             section: sec
+          });
+       }
+    });
+
+    res.json({
+      departments: uniqueClasses,
+      weeklyData
+    });
+
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching staff analytics", error: error.message });
+  }
+};
+
+/* =========================================
+   🎓 Staff – Class Details & Students
+   ========================================= */
+export const getStaffClassDetails = async (req, res) => {
+  try {
+    const { dept, section } = req.params;
+
+    // Use regex to loosely match Class department in case the frontend requested 'English'
+    const classInfo = await Class.findOne({ department: new RegExp(dept, "i") });
+
+    if (!classInfo) {
+      return res.status(404).json({ message: "Class not found" });
+    }
+
+    // Fetch students dynamically from User collection
+    const classStudents = await User.find({ classId: classInfo._id, role: "student" });
+
+    const startOfWeek = new Date();
+    startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay() + 1);
+    startOfWeek.setHours(0,0,0,0);
+
+    const attendances = await Attendance.find({
+      classId: classInfo._id,
+      date: { $gte: startOfWeek }
+    });
+
+    const students = classStudents.map(s => {
+      const stAtt = attendances.filter(a => a.student.toString() === s._id.toString());
+      const present = stAtt.filter(a => a.status === "Present").length;
+      const total = stAtt.length;
+      
+      const weekly = [0,0,0,0,0];
+      stAtt.forEach(a => {
+         const d = a.date.getDay(); 
+         if (d >= 1 && d <= 5) {
+            weekly[d-1] = a.status === "Present" ? 1 : 0;
+         }
+      });
+
+      return {
+        studentId: s._id,
+        roll: s.username,
+        name: s.username,
+        present: true, 
+        weekly,
+        percent: total === 0 ? 100 : Math.round((present / total) * 100),
+      };
+    });
+
+    res.json({
+      department: classInfo.department || dept,
+      section: classInfo.section || section || "A",
+      totalStudents: students.length,
+      students
+    });
+
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching class details", error: error.message });
   }
 };

@@ -57,17 +57,17 @@ export const getDepartmentWiseAttendance = async (req, res) => {
     const departments = await Attendance.aggregate([
       {
         $lookup: {
-          from: "students",
-          localField: "student",
+          from: "classes",
+          localField: "classId",
           foreignField: "_id",
-          as: "student"
+          as: "classInfo"
         }
       },
-      { $unwind: "$student" },
+      { $unwind: "$classInfo" },
 
       {
         $group: {
-          _id: "$student.department",
+          _id: "$classInfo.department",
           total: { $sum: 1 },
           present: {
             $sum: {
@@ -100,17 +100,17 @@ export const getCollegeVsDepartmentAttendance = async (req, res) => {
     const deptStats = await Attendance.aggregate([
       {
         $lookup: {
-          from: "students",
-          localField: "student",
+          from: "classes",
+          localField: "classId",
           foreignField: "_id",
-          as: "student"
+          as: "classInfo"
         }
       },
-      { $unwind: "$student" },
+      { $unwind: "$classInfo" },
 
       {
         $group: {
-          _id: "$student.department",
+          _id: "$classInfo.department",
           total: { $sum: 1 },
           present: {
             $sum: {
@@ -210,17 +210,17 @@ export const getDepartmentsAtRisk = async (req, res) => {
     const result = await Attendance.aggregate([
       {
         $lookup: {
-          from: "students",
-          localField: "student",
+          from: "classes",
+          localField: "classId",
           foreignField: "_id",
-          as: "student"
+          as: "classInfo"
         }
       },
-      { $unwind: "$student" },
+      { $unwind: "$classInfo" },
 
       {
         $group: {
-          _id: "$student.department",
+          _id: "$classInfo.department",
           total: { $sum: 1 },
           present: {
             $sum: {

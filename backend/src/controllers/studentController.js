@@ -1,6 +1,7 @@
 import Attendance from "../models/Attendance.js";
 import Timetable from "../models/Timetable.js";
-import User from "../models/User.js";   // ✅ ADD THIS
+import User from "../models/User.js";
+import Class from "../models/Class.js";   // ✅ ADD THIS
 
 /* ✅ Student Profile */
 export const getStudentProfile = async (req, res) => {

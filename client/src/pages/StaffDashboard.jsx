@@ -1,6 +1,7 @@
-import { Box, Card, CardContent, Typography, Chip } from "@mui/material";
+import { Box, Card, CardContent, Typography, Chip, CircularProgress } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import api from "../utils/api";
 import {
   LineChart,
   Line,
@@ -10,51 +11,43 @@ import {
   ResponsiveContainer
 } from "recharts";
 
-/* ------------------ DATA ------------------ */
-
-const departments = [
-  { name: "CSE", section: "A" },
-  { name: "ECE", section: "A" },
-  { name: "EEE", section: "A" },
-  { name: "MECH", section: "A" }
-];
-
-const weeklyData = {
-  CSE: [
-    { day: "Mon", percent: 82 },
-    { day: "Tue", percent: 85 },
-    { day: "Wed", percent: 80 },
-    { day: "Thu", percent: 88 },
-    { day: "Fri", percent: 90 }
-  ],
-  ECE: [
-    { day: "Mon", percent: 78 },
-    { day: "Tue", percent: 80 },
-    { day: "Wed", percent: 76 },
-    { day: "Thu", percent: 82 },
-    { day: "Fri", percent: 84 }
-  ],
-  EEE: [
-    { day: "Mon", percent: 70 },
-    { day: "Tue", percent: 72 },
-    { day: "Wed", percent: 68 },
-    { day: "Thu", percent: 74 },
-    { day: "Fri", percent: 76 }
-  ],
-  MECH: [
-    { day: "Mon", percent: 85 },
-    { day: "Tue", percent: 88 },
-    { day: "Wed", percent: 84 },
-    { day: "Thu", percent: 90 },
-    { day: "Fri", percent: 92 }
-  ]
-};
-
-/* ------------------ COMPONENT ------------------ */
+/* ---------------- COMPONENT ---------------- */
 
 export default function StaffDashboard() {
   const navigate = useNavigate();
-  const [selectedDept, setSelectedDept] = useState("MECH");
+  const [selectedDept, setSelectedDept] = useState("");
+  const [departments, setDepartments] = useState([]);
+  const [weeklyData, setWeeklyData] = useState({});
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchStaffStats = async () => {
+      try {
+        const response = await api.get("/staff/attendance/weekly");
+        const { departments: depts, weeklyData: chartData } = response.data;
+        
+        setDepartments(depts || []);
+        setWeeklyData(chartData || {});
+        
+        if (depts && depts.length > 0) {
+          setSelectedDept(depts[0].name);
+        }
+      } catch (err) {
+        console.error("Failed to fetch staff analytics", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchStaffStats();
+  }, []);
+
+  if (loading) {
+    return (
+      <Box sx={{ minHeight: "100vh", bgcolor: "#121212", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <CircularProgress sx={{ color: "#2196f3" }} />
+      </Box>
+    );
+  }
 
   return (
     <Box
@@ -144,26 +137,30 @@ export default function StaffDashboard() {
           border: "1px solid #333"
         }}
       >
-        <ResponsiveContainer width="100%" height={320}>
-          <LineChart data={weeklyData[selectedDept]}>
-            <XAxis dataKey="day" stroke="#aaa" />
-            <YAxis stroke="#aaa" domain={[0, 100]} />
-            <Tooltip
-              contentStyle={{
-                backgroundColor: "#111",
-                border: "1px solid #444",
-                color: "#fff"
-              }}
-            />
-            <Line
-              type="monotone"
-              dataKey="percent"
-              stroke="#64b5f6"
-              strokeWidth={3}
-              dot={{ r: 6 }}
-            />
-          </LineChart>
-        </ResponsiveContainer>
+        {weeklyData[selectedDept] ? (
+          <ResponsiveContainer width="100%" height={320}>
+            <LineChart data={weeklyData[selectedDept]}>
+              <XAxis dataKey="day" stroke="#aaa" />
+              <YAxis stroke="#aaa" domain={[0, 100]} />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: "#111",
+                  border: "1px solid #444",
+                  color: "#fff"
+                }}
+              />
+              <Line
+                type="monotone"
+                dataKey="percent"
+                stroke="#64b5f6"
+                strokeWidth={3}
+                dot={{ r: 6 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        ) : (
+          <Typography align="center" sx={{ p: 4 }}>No data available for this department</Typography>
+        )}
       </Card>
     </Box>
   );

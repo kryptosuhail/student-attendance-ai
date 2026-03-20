@@ -1,3 +1,5 @@
+import { useState, useEffect } from "react";
+import api from "../utils/api";
 import {
   Box,
   Typography,
@@ -6,7 +8,8 @@ import {
   Grid,
   Chip,
   Alert,
-  Divider
+  Divider,
+  CircularProgress
 } from "@mui/material";
 import {
   BarChart,
@@ -21,23 +24,6 @@ import {
   CartesianGrid
 } from "recharts";
 
-/* ---------------- MOCK DATA ---------------- */
-
-const departments = [
-  { name: "CSE", percent: 68 },
-  { name: "IT", percent: 82 },
-  { name: "ECE", percent: 71 },
-  { name: "MECH", percent: 89 }
-];
-
-const weeklyTrend = [
-  { day: "Mon", value: 76 },
-  { day: "Tue", value: 78 },
-  { day: "Wed", value: 74 },
-  { day: "Thu", value: 80 },
-  { day: "Fri", value: 83 }
-];
-
 /* ---------------- HELPERS ---------------- */
 
 const getStatus = (percent) => {
@@ -49,18 +35,74 @@ const getStatus = (percent) => {
 /* ---------------- COMPONENT ---------------- */
 
 export default function ManagementDashboard() {
-  const avgAttendance = Math.round(
-    departments.reduce((sum, d) => sum + d.percent, 0) /
-      departments.length
-  );
+  const [departments, setDepartments] = useState([]);
+  const [comparisonData, setComparisonData] = useState([]);
+  const [weeklyTrend, setWeeklyTrend] = useState([]);
+  const [riskyDepartments, setRiskyDepartments] = useState([]);
+  const [overall, setOverall] = useState(0);
+  const [loading, setLoading] = useState(true);
 
-  const riskyDepartments = departments.filter((d) => d.percent < 75);
+  useEffect(() => {
+    const fetchManagementData = async () => {
+      try {
+        const [
+          deptRes,
+          compRes,
+          weekRes,
+          alertRes,
+          overallRes
+        ] = await Promise.all([
+          api.get("/management/attendance/department"),
+          api.get("/management/attendance/comparison"),
+          api.get("/management/attendance/weekly"),
+          api.get("/management/alerts"),
+          api.get("/management/attendance/overall")
+        ]);
 
-  const comparisonData = departments.map((d) => ({
-    name: d.name,
-    Department: d.percent,
-    CollegeAvg: avgAttendance
-  }));
+        // 1. Dept Overview
+        const depts = deptRes.data.departments.map(d => ({
+          name: d.department || "Unknown",
+          percent: d.attendancePercentage || 0
+        }));
+        setDepartments(depts);
+
+        // 2. Comparison Chart
+        const comp = compRes.data.departments.map(d => ({
+          name: d.department,
+          Department: d.attendance,
+          CollegeAvg: d.collegeAverage
+        }));
+        setComparisonData(comp);
+
+        // 3. Weekly Trend
+        const week = weekRes.data.weekly.map(w => ({
+          day: w.day,
+          value: w.attendance
+        }));
+        setWeeklyTrend(week);
+
+        // 4. Alerts (Risky)
+        const risky = alertRes.data.departments.map(d => ({
+          name: d.department,
+          percent: d.attendancePercentage
+        }));
+        setRiskyDepartments(risky);
+
+        // 5. Overall
+        setOverall(overallRes.data.attendancePercentage || 0);
+
+      } catch (err) {
+        console.error("Failed to fetch management analytics", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchManagementData();
+  }, []);
+
+  if (loading) {
+     return <Box p={5} textAlign="center" color="#fff" minHeight="100vh" bgcolor="#0f172a"><CircularProgress sx={{ color: "#38bdf8" }} /></Box>;
+  }
 
   return (
     <Box
@@ -79,9 +121,9 @@ export default function ManagementDashboard() {
       <Grid container spacing={2}>
         {[
           ["Departments", departments.length],
-          ["Overall Attendance", `${avgAttendance}%`],
+          ["Overall Attendance", `${overall}%`],
           ["Departments at Risk", riskyDepartments.length],
-          ["Weekly Trend", avgAttendance > 75 ? "Improving" : "Declining"]
+          ["Weekly Trend", weeklyTrend.length > 1 && weeklyTrend[weeklyTrend.length - 1].value >= weeklyTrend[0].value ? "Improving" : "Declining"]
         ].map(([label, value]) => (
           <Grid item xs={12} md={3} key={label}>
             <Card sx={{ bgcolor: "#111827", borderRadius: 2 }}>

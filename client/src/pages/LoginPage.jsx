@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import api from "../utils/api";
+import { useAuth } from "../context/AuthContext";
 import {
   Box,
   Card,
@@ -15,15 +17,35 @@ import {
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const { login } = useAuth(); // Use context to store role and token
 
   const [role, setRole] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [errorMsg, setErrorMsg] = useState("");
 
-  const handleLogin = () => {
-    if (role === "student") navigate("/student");
-    if (role === "staff") navigate("/staff");
-    if (role === "management") navigate("/management");
+  const handleLogin = async () => {
+    setErrorMsg("");
+    try {
+      const response = await api.post("/auth/login", { username, password });
+      
+      const { token, user } = response.data;
+      
+      // Ensure the selected role matches the user's actual role in the DB
+      if (role && user.role !== role) {
+        setErrorMsg(`You are registered as a ${user.role}, please select the correct role or leave it unselected.`);
+        return;
+      }
+
+      login(user.role, token); // Store role & token in context/localStorage
+      
+      if (user.role === "student") navigate("/student");
+      if (user.role === "staff") navigate("/staff");
+      if (user.role === "management") navigate("/management");
+      
+    } catch (err) {
+      setErrorMsg(err.response?.data?.message || "Login failed. Please check credentials.");
+    }
   };
 
   return (
@@ -43,6 +65,12 @@ export default function LoginPage() {
           </Typography>
 
           {/* ROLE SELECTION (FIXED) */}
+          {errorMsg && (
+            <Typography color="error" variant="body2" align="center" sx={{ mb: 2 }}>
+              {errorMsg}
+            </Typography>
+          )}
+
           <FormControl fullWidth sx={{ mb: 2 }}>
             <InputLabel id="role-label">Select Role</InputLabel>
             <Select
@@ -78,7 +106,7 @@ export default function LoginPage() {
             fullWidth
             variant="contained"
             size="large"
-            disabled={!role}
+            disabled={!username || !password}
             onClick={handleLogin}
           >
             LOGIN

@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import {
   Box,
   Card,
@@ -9,8 +10,10 @@ import {
   TableBody,
   TableCell,
   TableHead,
-  TableRow
+  TableRow,
+  CircularProgress
 } from "@mui/material";
+import api from "../utils/api";
 import {
   LineChart,
   Line,
@@ -22,35 +25,83 @@ import {
 } from "recharts";
 
 export default function StudentDashboard() {
-  const student = {
-    name: "Mythili S",
-    regNo: "21CS045",
-    department: "Computer Science",
-    year: "3rd Year",
-    overallAttendance: 78
-  };
+  const [student, setStudent] = useState({
+    name: "Loading...",
+    regNo: "N/A",
+    department: "N/A",
+    year: "N/A",
+    overallAttendance: 0
+  });
+  
+  const [weeklyChart, setWeeklyChart] = useState([]);
+  const [todaySchedule, setTodaySchedule] = useState([]);
+  const [weeklyTable, setWeeklyTable] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const weeklyChart = [
-    { day: "Mon", attendance: 80 },
-    { day: "Tue", attendance: 75 },
-    { day: "Wed", attendance: 85 },
-    { day: "Thu", attendance: 70 },
-    { day: "Fri", attendance: 80 }
-  ];
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const [profileRes, summaryRes, scheduleRes, analyticsRes] = await Promise.all([
+          api.get("/student/profile"),
+          api.get("/student/attendance/summary"),
+          api.get("/student/schedule/today"),
+          api.get("/student/attendance/weekly-analytics")
+        ]);
 
-  const todaySchedule = [
-    { period: 1, subject: "AI", staff: "Dr. Kumar" },
-    { period: 2, subject: "DBMS", staff: "Ms. Priya" },
-    { period: 3, subject: "OS", staff: "Mr. Arun" }
-  ];
+        const profile = profileRes.data.user;
+        const summary = summaryRes.data;
+        const schedule = scheduleRes.data.schedule || [];
+        const analytics = analyticsRes.data.weekly || [];
 
-  const weeklyTable = [
-    { day: "Mon", status: "Present" },
-    { day: "Tue", status: "Absent" },
-    { day: "Wed", status: "Present" },
-    { day: "Thu", status: "Present" },
-    { day: "Fri", status: "Present" }
-  ];
+        setStudent({
+          name: profile.username || "Student",
+          regNo: profile.username, // Assuming username is regNo
+          department: profile.department,
+          year: profile.year,
+          overallAttendance: summary.percentage || 0
+        });
+
+        // Map analytics to chart format
+        const chartData = analytics.map(a => ({
+          day: a.day,
+          attendance: Math.round((a.present / a.total) * 100) || 0
+        }));
+        
+        // Ensure Mon-Fri exist in chart
+        const defaultDays = ["Mon", "Tue", "Wed", "Thu", "Fri"];
+        const fullChartData = defaultDays.map(d => {
+           const found = chartData.find(c => c.day === d);
+           return found || { day: d, attendance: 0 };
+        });
+        
+        setWeeklyChart(fullChartData);
+        setTodaySchedule(schedule);
+        
+        // We can just use the raw summary or analytics to build the weeklyTable.
+        // For simplicity, we just transform analytics:
+        const tableData = fullChartData.map(d => ({
+          day: d.day,
+          status: d.attendance > 0 ? "Present" : "Absent" // Basic heuristic since backend returns counts
+        }));
+        setWeeklyTable(tableData);
+
+      } catch (err) {
+        console.error("Failed to load dashboard data", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchDashboardData();
+  }, []);
+
+  if (loading) {
+    return (
+      <Box sx={{ minHeight: "100vh", bgcolor: "#0f172a", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <CircularProgress sx={{ color: "#38bdf8" }} />
+      </Box>
+    );
+  }
 
   const aiRisk =
     student.overallAttendance < 65

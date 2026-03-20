@@ -6,7 +6,9 @@ import {
   getCurrentPeriodClass,
   getClassAttendanceSummary,
   getLowAttendanceStudents,
-  getOverallAttendanceSummary
+  getOverallAttendanceSummary,
+  getStaffWeeklyAnalytics,
+  getStaffClassDetails
 } from "../controllers/staffController.js";
 
 const router = express.Router();
@@ -46,6 +48,20 @@ router.get(
   protect,
   authorize("staff"),
   getOverallAttendanceSummary
+);
+
+router.get(
+  "/attendance/weekly",
+  protect,
+  authorize("staff"),
+  getStaffWeeklyAnalytics
+);
+
+router.get(
+  "/class/:dept/:section",
+  protect,
+  authorize("staff"),
+  getStaffClassDetails
 );
 
 export default router;
