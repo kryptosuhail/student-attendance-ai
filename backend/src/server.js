@@ -12,7 +12,6 @@ import attendanceRoutes from "./routes/attendanceRoutes.js";
 import aiRoutes from "./routes/aiRoutes.js";
 
 
-
 dotenv.config();
 
 const app = express();
@@ -32,6 +31,8 @@ app.use("/api/attendance", attendanceRoutes);
 app.use("/api/ai", aiRoutes);
 
 
+import "./jobs/attendanceCron.js";
+
 const PORT = process.env.PORT || 5000;
 
 connectDB().then(() => {
@@ -39,6 +40,3 @@ connectDB().then(() => {
     console.log(`🚀 Server running on port ${PORT}`);
   });
 });
-
-
-

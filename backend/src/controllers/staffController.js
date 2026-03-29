@@ -339,23 +339,11 @@ export const getStaffWeeklyAnalytics = async (req, res) => {
       weeklyData[dept] = chartData;
     }
 
-    const uniqueClasses = [];
-    const seen = new Set();
-    classes.forEach(c => {
-       const dept = c.classId?.department || "Unknown";
-       const sec = c.classId?.section || "A";
-       const key = `${dept}-${sec}`;
-       if (!seen.has(key)) {
-          seen.add(key);
-          uniqueClasses.push({
-             name: dept,
-             section: sec
-          });
-       }
-    });
+    const uniqueDepts = [...new Set(classes.map(c => c.classId?.department || "General"))];
+    const departmentCards = uniqueDepts.map(name => ({ name }));
 
     res.json({
-      departments: uniqueClasses,
+      departments: departmentCards,
       weeklyData
     });
 
@@ -369,14 +357,21 @@ export const getStaffWeeklyAnalytics = async (req, res) => {
    ========================================= */
 export const getStaffClassDetails = async (req, res) => {
   try {
-    const { dept, section } = req.params;
+    const { dept, year, section } = req.params;
 
-    // Use regex to loosely match Class department in case the frontend requested 'English'
-    const classInfo = await Class.findOne({ department: new RegExp(dept, "i") });
+    // Use regex to loosely match Class
+    let classInfo = await Class.findOne({ 
+      department: new RegExp(`^${dept}$`, "i"),
+      year: parseInt(year),
+      section: new RegExp(`^${section}$`, "i")
+    });
 
     if (!classInfo) {
       return res.status(404).json({ message: "Class not found" });
     }
+
+    // NEW: Populate incharge info
+    await classInfo.populate("inchargeStaff", "realName username");
 
     // Fetch students dynamically from User collection
     const classStudents = await User.find({ classId: classInfo._id, role: "student" });
@@ -405,22 +400,110 @@ export const getStaffClassDetails = async (req, res) => {
 
       return {
         studentId: s._id,
-        roll: s.username,
-        name: s.username,
+        roll: s.registerNo || s.username,
+        name: s.realName || s.username,
         present: true, 
         weekly,
         percent: total === 0 ? 100 : Math.round((present / total) * 100),
       };
     });
 
+    // Find if this staff is actually teaching this class right now
+    const now = new Date();
+    const today = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][now.getDay()];
+    const currentTime = now.getHours().toString().padStart(2, "0") + ":" + now.getMinutes().toString().padStart(2, "0");
+    const PERIOD_SLOTS = [
+      { period: 1, start: "09:00", end: "09:50" },
+      { period: 2, start: "09:50", end: "10:40" },
+      { period: 3, start: "10:40", end: "11:30" },
+      { period: 4, start: "11:30", end: "12:20" }
+    ];
+    let activeSlot = PERIOD_SLOTS.find(slot => currentTime >= slot.start && currentTime < slot.end);
+
+    let currentSubject = "N/A";
+    let currentPeriod = "N/A";
+    // DEFAULT: Class Incharge
+    let activeStaffName = classInfo.inchargeStaff?.realName || classInfo.inchargeStaff?.username || "No Incharge";
+
+    if (activeSlot) {
+      const currentTimetable = await Timetable.findOne({
+        day: today,
+        period: activeSlot.period,
+        classId: classInfo._id
+      }).populate("staffId", "realName username");
+
+      if (currentTimetable) {
+        currentSubject = currentTimetable.subject;
+        currentPeriod = activeSlot.period;
+        // IF someone is teaching NOW, show them instead
+        if (currentTimetable.staffId) {
+            activeStaffName = currentTimetable.staffId.realName || currentTimetable.staffId.username;
+        }
+      }
+    }
+
     res.json({
       department: classInfo.department || dept,
+      year: classInfo.year || year,
       section: classInfo.section || section || "A",
+      classId: classInfo._id,
+      staffName: activeStaffName,
+      subject: currentSubject,
+      period: currentPeriod,
       totalStudents: students.length,
       students
     });
 
   } catch (error) {
     res.status(500).json({ message: "Error fetching class details", error: error.message });
+  }
+};
+
+/* ✅ Staff – Full Weekly Timetable */
+export const getStaffFullTimetable = async (req, res) => {
+  try {
+    const timetable = await Timetable.find({ staffId: req.user._id })
+      .populate("classId", "department section year")
+      .sort({ day: 1, period: 1 });
+
+    res.status(200).json({ timetable });
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching staff timetable", error: error.message });
+  }
+};
+
+/* =========================================
+   🏢 Staff – All Classes in a Department
+   ========================================= */
+export const getDepartmentClasses = async (req, res) => {
+  try {
+    const { dept } = req.params;
+    
+    const classes = await Timetable.find({ 
+      staffId: req.user._id 
+    }).populate("classId");
+
+    const deptClasses = classes
+      .filter(c => c.classId?.department.toLowerCase() === dept.toLowerCase())
+      .map(c => ({
+        id: c.classId._id,
+        year: c.classId.year,
+        section: c.classId.section,
+        department: c.classId.department
+      }));
+
+    const unique = [];
+    const seen = new Set();
+    deptClasses.forEach(c => {
+       const key = `${c.year}-${c.section}`;
+       if (!seen.has(key)) {
+          seen.add(key);
+          unique.push(c);
+       }
+    });
+
+    res.json({ classes: unique.sort((a,b) => a.year - b.year || a.section.localeCompare(b.section)) });
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching department classes", error: error.message });
   }
 };

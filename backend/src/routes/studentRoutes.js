@@ -8,7 +8,8 @@ import {
   getMyAttendance,
   getAttendanceSummary,
   getTodayStudentSchedule,
-  getWeeklyAttendanceAnalytics
+  getWeeklyAttendanceAnalytics,
+  getFullWeeklyTimetable
 } from "../controllers/studentController.js";
 
 const router = express.Router();
@@ -77,10 +78,10 @@ router.get(
 );
 
 router.get(
-  "/ai-suggestion",
+  "/schedule/weekly",
   protect,
   authorize("student"),
-  getStudentAISuggestion
+  getFullWeeklyTimetable
 );
 
 router.post("/ai/suggestion", getStudentAISuggestion);

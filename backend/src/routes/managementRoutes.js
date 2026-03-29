@@ -8,7 +8,8 @@ import {
   getCollegeVsDepartmentAttendance,
   getCollegeWeeklyTrend,
   getDepartmentsAtRisk,
-  getAttendanceAlerts
+  getAttendanceAlerts,
+  getDetailedDefaulterList
 } from "../controllers/managementAnalyticsController.js";
 
 const router = express.Router();
@@ -61,6 +62,13 @@ router.get(
   protect,
   authorize("management"),
   getAttendanceAlerts
+);
+
+router.get(
+  "/defaulters/detailed",
+  protect,
+  authorize("management"),
+  getDetailedDefaulterList
 );
 
 export default router;

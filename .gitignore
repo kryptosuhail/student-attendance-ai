@@ -3,6 +3,9 @@
 # ===========================
 node_modules/
 **/node_modules/
+.env
+**/.env
+backend/.env
 
 # ===========================
 # Environment Variables

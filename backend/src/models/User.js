@@ -18,7 +18,16 @@ const userSchema = new mongoose.Schema(
       required: true
     },
 
-    // ✅ ADD THIS (CRITICAL)
+    // ✅ Separate identifiers
+    realName: {
+      type: String,
+      default: ""
+    },
+    registerNo: {
+      type: String,
+      default: ""
+    },
+    
     classId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Class",

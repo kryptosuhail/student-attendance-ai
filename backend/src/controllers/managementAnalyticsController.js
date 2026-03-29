@@ -67,7 +67,7 @@ export const getDepartmentWiseAttendance = async (req, res) => {
 
       {
         $group: {
-          _id: "$classInfo.department",
+          _id: { $ifNull: ["$classInfo.department", "$classInfo.name"] },
           total: { $sum: 1 },
           present: {
             $sum: {
@@ -110,7 +110,7 @@ export const getCollegeVsDepartmentAttendance = async (req, res) => {
 
       {
         $group: {
-          _id: "$classInfo.department",
+          _id: { $ifNull: ["$classInfo.department", "$classInfo.name"] },
           total: { $sum: 1 },
           present: {
             $sum: {
@@ -220,7 +220,7 @@ export const getDepartmentsAtRisk = async (req, res) => {
 
       {
         $group: {
-          _id: "$classInfo.department",
+          _id: { $ifNull: ["$classInfo.department", "$classInfo.name"] },
           total: { $sum: 1 },
           present: {
             $sum: {
@@ -259,6 +259,73 @@ export const getAttendanceAlerts = async (req, res) => {
       alerts: [],
       message: "Attendance alerts API working"
     });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+/* =========================================================
+  6️⃣ DETAILED DEFAULTER LIST (PDF EXPORT DATA)
+========================================================= */
+export const getDetailedDefaulterList = async (req, res) => {
+  try {
+    const THRESHOLD = 75;
+
+    const defaulters = await Attendance.aggregate([
+      // 1. Group by student
+      {
+        $group: {
+          _id: "$student",
+          total: { $sum: 1 },
+          present: {
+            $sum: { $cond: [{ $eq: ["$status", "Present"] }, 1, 0] }
+          }
+        }
+      },
+      // 2. Calculate percentage
+      {
+        $project: {
+          studentId: "$_id",
+          percentage: percentageExpr
+        }
+      },
+      // 3. Filter by threshold
+      { $match: { percentage: { $lt: THRESHOLD } } },
+      // 4. Lookup student info
+      {
+        $lookup: {
+          from: "users",
+          localField: "studentId",
+          foreignField: "_id",
+          as: "studentInfo"
+        }
+      },
+      { $unwind: "$studentInfo" },
+      // 5. Lookup class info
+      {
+        $lookup: {
+          from: "classes",
+          localField: "studentInfo.classId",
+          foreignField: "_id",
+          as: "classInfo"
+        }
+      },
+      { $unwind: { path: "$classInfo", preserveNullAndEmptyArrays: true } },
+      // 6. Format final output
+      {
+        $project: {
+          _id: 0,
+          name: { $ifNull: ["$studentInfo.realName", "$studentInfo.username"] },
+          username: { $ifNull: ["$studentInfo.registerNo", "$studentInfo.username"] },
+          department: { $ifNull: ["$classInfo.department", "N/A"] },
+          section: { $ifNull: ["$classInfo.section", "A"] },
+          percentage: 1
+        }
+      },
+      { $sort: { percentage: 1 } }
+    ]);
+
+    res.json({ defaulters });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

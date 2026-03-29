@@ -43,8 +43,8 @@ export default function StaffDashboard() {
 
   if (loading) {
     return (
-      <Box sx={{ minHeight: "100vh", bgcolor: "#121212", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <CircularProgress sx={{ color: "#2196f3" }} />
+      <Box sx={{ minHeight: "100vh", bgcolor: "#0f172a", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <CircularProgress sx={{ color: "#38bdf8" }} />
       </Box>
     );
   }
@@ -54,8 +54,8 @@ export default function StaffDashboard() {
       sx={{
         minHeight: "100vh",
         p: 4,
-        background: "radial-gradient(circle at top, #263238, #0f2027)",
-        color: "#fff"
+        bgcolor: "#0f172a",
+        color: "#e5e7eb"
       }}
     >
       {/* TITLE */}
@@ -81,29 +81,37 @@ export default function StaffDashboard() {
               key={dept.name}
               onClick={() => setSelectedDept(dept.name)}
               onDoubleClick={() =>
-                navigate(`/staff/class/${dept.name}/${dept.section}`)
+                navigate(`/staff/department/${dept.name}`)
               }
               sx={{
-                width: 200,
+                width: 220,
                 cursor: "pointer",
                 textAlign: "center",
                 background: isSelected
-                  ? "linear-gradient(135deg, #2196f3, #1e88e5)"
-                  : "linear-gradient(135deg, #111, #000)",
-                color: "#fff",
+                  ? "linear-gradient(135deg, #0F766E, #059669)"
+                  : "#111827",
+                color: "#e5e7eb",
                 border: isSelected
-                  ? "2px solid #90caf9"
-                  : "1px solid #333",
-                transition: "0.3s",
+                  ? "2px solid rgba(6,182,212,0.6)"
+                  : "1px solid rgba(255,255,255,0.08)",
+                borderRadius: 3,
+                transition: "all 0.35s ease",
                 "&:hover": {
-                  transform: "scale(1.05)"
+                  background: isSelected
+                    ? "linear-gradient(135deg, #059669, #10b981)"
+                    : "linear-gradient(135deg, #0c1a30 0%, #132040 50%, #111827 100%)",
+                  borderColor: isSelected ? 'rgba(16,185,129,0.7)' : 'rgba(56,189,248,0.45)',
+                  boxShadow: isSelected
+                    ? '0 10px 36px rgba(5,150,105,0.3)'
+                    : '0 10px 36px rgba(56,189,248,0.15)',
+                  transform: "translateY(-4px) scale(1.02)"
                 }
               }}
             >
               <CardContent>
-                <Typography variant="h6">{dept.name}</Typography>
-                <Typography variant="body2" sx={{ opacity: 0.8 }}>
-                  II / III Year ({dept.section})
+                <Typography variant="h6" sx={{ fontWeight: 600 }}>{dept.name}</Typography>
+                <Typography variant="body2" sx={{ opacity: 0.7 }}>
+                  Click to see Classes
                 </Typography>
 
                 {isSelected && (
@@ -133,8 +141,15 @@ export default function StaffDashboard() {
           maxWidth: 1000,
           mx: "auto",
           p: 2,
-          background: "linear-gradient(135deg, #0a0a0a, #121212)",
-          border: "1px solid #333"
+          bgcolor: '#111827',
+          border: '1px solid rgba(6,182,212,0.08)',
+          borderRadius: 3,
+          transition: 'all 0.35s ease',
+          '&:hover': {
+            background: 'linear-gradient(160deg, #0a1a24 0%, #0c2030 50%, #111827 100%)',
+            borderColor: 'rgba(6,182,212,0.3)',
+            boxShadow: '0 10px 36px rgba(6,182,212,0.12)'
+          }
         }}
       >
         {weeklyData[selectedDept] ? (
@@ -152,7 +167,7 @@ export default function StaffDashboard() {
               <Line
                 type="monotone"
                 dataKey="percent"
-                stroke="#64b5f6"
+                stroke="#06B6D4"
                 strokeWidth={3}
                 dot={{ r: 6 }}
               />

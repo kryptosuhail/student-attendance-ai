@@ -13,14 +13,9 @@ export const getStudentProfile = async (req, res) => {
       return res.status(404).json({ message: "Student not found" });
     }
 
-    res.status(200).json({
-  user: {
-    username: student.username,
-    department: student.classId?.department || "N/A",
-    year: student.classId?.year || "N/A",
-    section: student.classId?.section || "N/A"
-  }
-});
+  res.status(200).json({
+    user: student
+  });
 
   } catch (error) {
     res.status(500).json({
@@ -178,5 +173,24 @@ export const getWeeklyAttendanceAnalytics = async (req, res) => {
       message: "Error fetching weekly analytics",
       error: error.message
     });
+  }
+};
+
+/* ✅ Student – Full Weekly Timetable */
+export const getFullWeeklyTimetable = async (req, res) => {
+  try {
+    const student = await User.findById(req.user._id);
+
+    if (!student.classId) {
+      return res.status(400).json({ message: "Student is not assigned to any class" });
+    }
+
+    const timetable = await Timetable.find({ classId: student.classId })
+      .populate("staffId", "username")
+      .sort({ day: 1, period: 1 });
+
+    res.status(200).json({ timetable });
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching timetable", error: error.message });
   }
 };

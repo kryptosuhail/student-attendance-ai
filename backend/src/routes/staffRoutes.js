@@ -8,7 +8,9 @@ import {
   getLowAttendanceStudents,
   getOverallAttendanceSummary,
   getStaffWeeklyAnalytics,
-  getStaffClassDetails
+  getStaffClassDetails,
+  getStaffFullTimetable,
+  getDepartmentClasses
 } from "../controllers/staffController.js";
 
 const router = express.Router();
@@ -58,10 +60,24 @@ router.get(
 );
 
 router.get(
-  "/class/:dept/:section",
+  "/class/:dept/:year/:section",
   protect,
   authorize("staff"),
   getStaffClassDetails
+);
+
+router.get(
+  "/schedule/weekly",
+  protect,
+  authorize("staff"),
+  getStaffFullTimetable
+);
+
+router.get(
+  "/department/:dept/classes",
+  protect,
+  authorize("staff"),
+  getDepartmentClasses
 );
 
 export default router;
