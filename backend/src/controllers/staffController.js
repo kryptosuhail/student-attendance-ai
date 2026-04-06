@@ -376,26 +376,30 @@ export const getStaffClassDetails = async (req, res) => {
     // Fetch students dynamically from User collection
     const classStudents = await User.find({ classId: classInfo._id, role: "student" });
 
-    const startOfWeek = new Date();
-    startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay() + 1);
-    startOfWeek.setHours(0,0,0,0);
+    // 1. Fetch ALL attendance for this class (for total percentage)
+    const allAttendances = await Attendance.find({ classId: classInfo._id });
 
-    const attendances = await Attendance.find({
-      classId: classInfo._id,
-      date: { $gte: startOfWeek }
-    });
+    // 2. Define start of current week for the 'weekly' snapshot
+    const startOfWeek = new Date();
+    startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay() + 1); // Monday
+    startOfWeek.setHours(0, 0, 0, 0);
 
     const students = classStudents.map(s => {
-      const stAtt = attendances.filter(a => a.student.toString() === s._id.toString());
-      const present = stAtt.filter(a => a.status === "Present").length;
-      const total = stAtt.length;
+      // Overall percentage logic
+      const studentAllAtt = allAttendances.filter(a => a.student.toString() === s._id.toString());
+      const totalOverall = studentAllAtt.length;
+      const presentOverall = studentAllAtt.filter(a => a.status === "Present").length;
+
+      // Current week trend logic
+      const weekly = [0, 0, 0, 0, 0];
+      const studentWeeklyAtt = studentAllAtt.filter(a => new Date(a.date) >= startOfWeek);
       
-      const weekly = [0,0,0,0,0];
-      stAtt.forEach(a => {
-         const d = a.date.getDay(); 
-         if (d >= 1 && d <= 5) {
-            weekly[d-1] = a.status === "Present" ? 1 : 0;
-         }
+      studentWeeklyAtt.forEach(a => {
+        const d = new Date(a.date).getDay();
+        if (d >= 1 && d <= 5) {
+          // If they were present at least once in any period on that day, show as 1
+          if (a.status === "Present") weekly[d-1] = 1;
+        }
       });
 
       return {
@@ -404,7 +408,7 @@ export const getStaffClassDetails = async (req, res) => {
         name: s.realName || s.username,
         present: true, 
         weekly,
-        percent: total === 0 ? 100 : Math.round((present / total) * 100),
+        percent: totalOverall === 0 ? 100 : Math.round((presentOverall / totalOverall) * 100),
       };
     });
 

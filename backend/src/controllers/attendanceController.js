@@ -61,7 +61,7 @@ export const markAttendanceLocked = async (req, res) => {
       subject: subject || "General",
       period: activePeriod,
       date: dateOnly,
-      staffId
+      markedBy: staffId
     }));
 
     await Attendance.insertMany(records);

@@ -143,9 +143,7 @@ export default function StaffClass() {
   const riskData = useMemo(
     () =>
       attendance.map((s) => {
-        const weeklyData = s.weekly || [];
-        const percent =
-          (weeklyData.filter((d) => d === 1).length / 5) * 100;
+        const percent = s.percent ?? 0;
         let risk = "Safe";
         if (percent < 75) risk = "At Risk";
         else if (percent < 85) risk = "Warning";
@@ -460,7 +458,7 @@ export default function StaffClass() {
                       {riskData.map((student) => {
                         const pct = student.percent || 0;
                         const aiS = classAiResult?.students?.find(
-                          s => s.name === student.name
+                           (s) => s.name === student.name
                         );
                         const riskName = aiS?.risk_level || student.risk;
                         const eligible = aiS?.exam_eligible ?? (pct >= 75);
