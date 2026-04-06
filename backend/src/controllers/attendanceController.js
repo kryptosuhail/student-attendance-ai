@@ -1,5 +1,7 @@
 import Attendance from "../models/Attendance.js";
 import Timetable from "../models/Timetable.js";
+import User from "../models/User.js";
+import Class from "../models/Class.js";
 
 // same PERIOD_SLOTS used earlier
 const PERIOD_SLOTS = [
@@ -74,5 +76,62 @@ export const markAttendanceLocked = async (req, res) => {
       message: "Error marking attendance",
       error: error.message
     });
+  }
+};
+
+// Webhook for Google Forms Integration
+export const markAttendanceGoogleForm = async (req, res) => {
+  try {
+    const { secret, staffUsername, department, year, section, subject, period, absentRegisterNos } = req.body;
+
+    // A simple shared secret to verify the request comes from your Google Sheet Apps Script
+    if (secret !== "ATTENDANCE_FORM_SECRET_123") {
+      return res.status(401).json({ message: "Unauthorized webhook" });
+    }
+
+    const staff = await User.findOne({ username: staffUsername, role: "staff" });
+    if (!staff) return res.status(404).json({ message: "Staff not found" });
+
+    const classDoc = await Class.findOne({ department, year: Number(year), section });
+    if (!classDoc) return res.status(404).json({ message: "Class not found" });
+
+    // Find all students in this class
+    const allStudents = await User.find({ classId: classDoc._id, role: "student" });
+    
+    // Parse absent register numbers
+    const absentArr = (absentRegisterNos || "")
+      .split(",")
+      .map(s => s.trim().toUpperCase())
+      .filter(s => s);
+
+    const now = new Date();
+    const dateOnly = new Date(now.toDateString());
+
+    const alreadyMarked = await Attendance.findOne({
+      classId: classDoc._id,
+      date: dateOnly,
+      period: Number(period)
+    });
+
+    if (alreadyMarked) {
+      return res.status(409).json({ message: "Attendance already marked for this period via Google Forms" });
+    }
+
+    const records = allStudents.map(student => ({
+      student: student._id,
+      status: absentArr.includes(student.registerNo?.toUpperCase()) ? "Absent" : "Present",
+      classId: classDoc._id,
+      subject: subject || "General",
+      period: Number(period),
+      date: dateOnly,
+      markedBy: staff._id
+    }));
+
+    await Attendance.insertMany(records);
+
+    res.status(201).json({ message: "Attendance synced from Google Form successfully!" });
+  } catch (error) {
+    console.error("Google Form Webhook Error:", error);
+    res.status(500).json({ message: "Webhook error", error: error.message });
   }
 };

@@ -59,9 +59,31 @@ export default function StaffDashboard() {
       }}
     >
       {/* TITLE */}
-      <Typography variant="h4" align="center" sx={{ mb: 4 }}>
-        Staff Dashboard
-      </Typography>
+      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 4, flexWrap: "wrap", gap: 2 }}>
+        <Typography variant="h4" sx={{ mx: "auto" }}>
+          Staff Dashboard
+        </Typography>
+        <Box sx={{ display: "flex", gap: 2 }}>
+          <Chip 
+             component="a" 
+             href="https://docs.google.com/forms/d/e/1FAIpQLSc5nx1MVZzcT_-sVLZ3jacbm4Z4YJI5SkpmqbpHuCU3_ZJOig/viewform"
+             target="_blank"
+             rel="noreferrer"
+             label="Mark via Google Form" 
+             sx={{ 
+                bgcolor: "#059669", 
+                color: "#fff", 
+                fontWeight: "bold", 
+                cursor: "pointer", 
+                px: 1, 
+                py: 2, 
+                borderRadius: 2,
+                transition: "all 0.3s ease",
+                "&:hover": { bgcolor: "#10b981", transform: "scale(1.05)" } 
+             }} 
+          />
+        </Box>
+      </Box>
 
       {/* DEPARTMENT CARDS */}
       <Box

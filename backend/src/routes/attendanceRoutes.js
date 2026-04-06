@@ -1,7 +1,7 @@
 import express from "express";
 import protect from "../middleware/authMiddleware.js";
 import authorize from "../middleware/authorize.js";
-import { markAttendanceLocked } from "../controllers/attendanceController.js";
+import { markAttendanceLocked, markAttendanceGoogleForm } from "../controllers/attendanceController.js";
 
 const router = express.Router();
 
@@ -12,5 +12,8 @@ router.post(
   authorize("staff"),
   markAttendanceLocked
 );
+
+/* ✅ Google Forms Webhook - No App Auth, Uses Secret */
+router.post("/webhook", markAttendanceGoogleForm);
 
 export default router;
